@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bien_barbie_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bien_barbie
+      POSTGRES_USER: bienbarbie
+      POSTGRES_PASSWORD: bienbarbie123
+    ports:
+      - "5433:5432"
+    volumes:
+      - bien_barbie_pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  bien_barbie_pgdata:
