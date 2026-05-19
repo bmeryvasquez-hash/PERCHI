@@ -1,0 +1,84 @@
+{
+    "version":  "2.0.0",
+    "tasks":  [
+                  {
+                      "label":  "db: iniciar postgres",
+                      "type":  "shell",
+                      "command":  "npm run db:up",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "backend: instalar dependencias",
+                      "type":  "shell",
+                      "command":  "npm run install:backend",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "backend: migrar prisma",
+                      "type":  "shell",
+                      "command":  "npm run prisma:migrate -- --name init",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "backend: dev",
+                      "type":  "shell",
+                      "command":  "npm run dev:backend",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "isBackground":  true,
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "frontend: instalar dependencias",
+                      "type":  "shell",
+                      "command":  "npm run install:frontend",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "frontend: dev",
+                      "type":  "shell",
+                      "command":  "npm run dev:frontend",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "isBackground":  true,
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "db: crear datos de prueba",
+                      "type":  "shell",
+                      "command":  "npm run db:seed",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  }
+              ]
+}

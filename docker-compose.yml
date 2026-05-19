@@ -1,0 +1,21 @@
+name: perchi
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: perchi_postgres
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-perchi}
+      POSTGRES_USER: ${POSTGRES_USER:-perchi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-perchi123}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - perchi_pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  perchi_pgdata:

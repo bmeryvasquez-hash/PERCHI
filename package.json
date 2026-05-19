@@ -1,0 +1,23 @@
+{
+    "name":  "perchi-starter",
+    "version":  "0.1.0",
+    "private":  true,
+    "scripts":  {
+                    "db:up":  "docker compose --env-file ../.env up -d postgres",
+                    "db:down":  "docker compose --env-file ../.env down",
+                    "install:backend":  "npm install --prefix backend",
+                    "install:frontend":  "npm install --prefix frontend",
+                    "dev:backend":  "npm run dev --prefix backend",
+                    "dev:frontend":  "npm run dev --prefix frontend",
+                    "build:backend":  "npm run build --prefix backend",
+                    "build:frontend":  "npm run build --prefix frontend",
+                    "prisma:generate":  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prisma-env.ps1 generate --schema backend/prisma/schema.prisma",
+                    "prisma:migrate":  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prisma-env.ps1 migrate dev --schema backend/prisma/schema.prisma",
+                    "prisma:studio":  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prisma-env.ps1 studio --schema backend/prisma/schema.prisma",
+                    "db:seed":  "npm run db:seed --prefix backend"
+                },
+    "workspaces":  [
+                       "backend",
+                       "frontend"
+                   ]
+}

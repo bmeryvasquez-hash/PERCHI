@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  SUSPENDED
+}
+
+enum CommunityRole {
+  MEMBER
+  ADMIN
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  PAUSED
+}
+
+enum ClothingCategory {
+  ZAPATOS
+  SANDALIAS
+  BOTAS_BOTINES
+  ZAPATILLAS
+  JEANS
+  CALZAS
+  LEGGINS
+  SHORT
+  FALDA
+  FALDA_SHORT
+  ACCESORIOS
+  POLERA
+  BLUSA
+  TOP
+  VESTIDO
+  SWEATER
+  CHAQUETA
+  ENTERITO
+  PARKA
+  POLERON
+  OTRO
+}
+
+enum ClothingStyle {
+  DEPORTIVO
+  RAVE
+  URBANO
+  COQUETTE
+  FORMAL
+  CASUAL
+  BOHO
+  GOTICO
+}
+
+enum DeliveryMode {
+  PRESENCIAL
+  ENVIO
+  PRESENCIAL_ENVIO
+}
+
+enum ClothingCondition {
+  NUEVO_CON_ETIQUETA
+  COMO_NUEVO
+  MUY_BUENO
+  BUENO
+  CON_DETALLES
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  status       UserStatus    @default(PENDING_PAYMENT)
+  communityRole CommunityRole @default(MEMBER)
+  city         String?
+  commune      String?
+  bio          String?
+  avatarUrl    String?
+  deliveryMode DeliveryMode @default(PRESENCIAL_ENVIO)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  listings      Listing[]
+  subscription  Subscription?
+  purchases     Order[]       @relation("BuyerOrders")
+  sales         Order[]       @relation("SellerOrders")
+  likes         Like[]
+}
+
+model Subscription {
+  id              String     @id @default(uuid())
+  userId          String     @unique
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        String     @default("mock")
+  providerRef     String?
+  monthlyFeeClp   Int
+  active          Boolean    @default(false)
+  currentPeriodEnd DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Listing {
+  id          String             @id @default(uuid())
+  sellerId    String
+  seller      User               @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  title       String
+  brand       String?
+  category    ClothingCategory
+  style       ClothingStyle      @default(CASUAL)
+  size        String
+  condition   ClothingCondition
+  description String?
+  priceClp    Int
+  imageUrls   String[]           @default([])
+  status      ListingStatus      @default(ACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  order       Order?
+  likes       Like[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+}
+
+model Order {
+  id         String   @id @default(uuid())
+  listingId  String   @unique
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  buyerId    String
+  buyer      User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId   String
+  seller     User     @relation("SellerOrders", fields: [sellerId], references: [id])
+  amountClp  Int
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
