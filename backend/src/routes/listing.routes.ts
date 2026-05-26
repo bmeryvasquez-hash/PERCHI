@@ -6,16 +6,7 @@ import { requireAuth } from "../middleware/auth";
 
 export const listingRouter = Router();
 
-const imageValueSchema = z.string().refine(value => {
-  if (value.startsWith("data:image/")) return true;
-
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-}, "Imagen invalida");
+const imageValueSchema = z.string().url("Imagen invalida");
 
 const listingInputSchema = z.object({
   title: z.string().min(3),

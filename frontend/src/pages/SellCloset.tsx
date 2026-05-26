@@ -1,17 +1,9 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, getMockSessionUserId, getToken, isDemoSession, isMockSession } from "../api/client";
+import { api, getMockSessionUserId, getToken, isDemoSession, isMockSession, uploadImageDataUrl } from "../api/client";
 import { createMockListing, updateMockUser } from "../api/mock";
+import { readImageFileAsDataUrl } from "../lib/images";
 import { clothingConditions, clothingStyles, clothingTypes } from "../lib/listingOptions";
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function SellCloset() {
   const navigate = useNavigate();
@@ -24,7 +16,6 @@ export default function SellCloset() {
     condition: "COMO_NUEVO",
     description: "",
     priceClp: "",
-    imageUrl: ""
   });
   const [imagePreview, setImagePreview] = useState("");
   const [message, setMessage] = useState("");
@@ -60,9 +51,8 @@ export default function SellCloset() {
     if (!file) return;
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await readImageFileAsDataUrl(file);
       setImagePreview(dataUrl);
-      setForm(current => ({ ...current, imageUrl: "" }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar la imagen");
     }
@@ -73,7 +63,7 @@ export default function SellCloset() {
     setMessage("");
     setError("");
 
-    const imageUrls = [imagePreview || form.imageUrl].filter(Boolean);
+    let imageUrls: string[] = [];
 
     if (isDemo) {
       setMessage("Publicacion simulada correctamente en modo demo.");
@@ -97,7 +87,7 @@ export default function SellCloset() {
         condition: form.condition,
         description: form.description,
         priceClp: Number(form.priceClp),
-        imageUrls,
+        imageUrls: imagePreview ? [imagePreview] : [],
         sellerId: userId
       });
       navigate("/marketplace");
@@ -105,6 +95,11 @@ export default function SellCloset() {
     }
 
     try {
+      if (imagePreview) {
+        setMessage("Subiendo imagen...");
+        imageUrls = [await uploadImageDataUrl(imagePreview)];
+      }
+
       await api("/listings", {
         method: "POST",
         body: JSON.stringify({
@@ -157,11 +152,11 @@ export default function SellCloset() {
           <label>Estado<select value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value })}>{clothingConditions.map(condition => <option key={condition.value} value={condition.value}>{condition.label}</option>)}</select></label>
           <label>Descripcion<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></label>
           <label>Precio CLP<input value={form.priceClp} onChange={e => setForm({ ...form, priceClp: e.target.value })} type="number" min="1" required /></label>
-          <label>Subir imagen<input type="file" accept="image/*" onChange={onImageChange} /></label>
-          <label>o URL de imagen<input value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://..." /></label>
-          {imagePreview || form.imageUrl ? (
+          <label>Tomar foto de la prenda<input type="file" accept="image/*" capture="environment" onChange={onImageChange} /></label>
+          <label>Subir imagen desde galeria<input type="file" accept="image/*" onChange={onImageChange} /></label>
+          {imagePreview ? (
             <div className="upload-preview">
-              <img src={imagePreview || form.imageUrl} alt="Vista previa de la prenda" />
+              <img src={imagePreview} alt="Vista previa de la prenda" />
             </div>
           ) : null}
           <button className="primary-button">Publicar prenda</button>

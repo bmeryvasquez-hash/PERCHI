@@ -8,16 +8,7 @@ import { signToken } from "../utils/jwt";
 
 export const authRouter = Router();
 
-const imageValueSchema = z.string().refine(value => {
-  if (value.startsWith("data:image/")) return true;
-
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-}, "Imagen invalida");
+const imageValueSchema = z.string().url("Imagen invalida");
 
 const registerSchema = z.object({
   name: z.string().min(2),

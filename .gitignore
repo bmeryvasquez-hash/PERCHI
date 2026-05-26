@@ -6,4 +6,5 @@ coverage
 .vite
 *.log
 *.tsbuildinfo
+backend/uploads
 Plan_de_Negocio_Perchi.docx

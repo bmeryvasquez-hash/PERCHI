@@ -1,4 +1,19 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
+function resolveApiUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
+
+  if (typeof window === "undefined") return configuredUrl;
+
+  const hostname = window.location.hostname;
+  const isLocalBrowser = hostname === "localhost" || hostname === "127.0.0.1";
+
+  if (!isLocalBrowser && configuredUrl.includes("localhost")) {
+    return configuredUrl.replace("localhost", hostname);
+  }
+
+  return configuredUrl;
+}
+
+const API_URL = resolveApiUrl();
 const DEMO_TOKEN = "perchi_demo_session";
 const MOCK_TOKEN_PREFIX = "perchi_mock_user:";
 const AUTH_EVENT = "perchi-auth-changed";
@@ -76,4 +91,13 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   }
 
   return data as T;
+}
+
+export async function uploadImageDataUrl(dataUrl: string) {
+  const data = await api<{ imageUrl: string }>("/uploads/images", {
+    method: "POST",
+    body: JSON.stringify({ dataUrl })
+  });
+
+  return data.imageUrl;
 }
