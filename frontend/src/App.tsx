@@ -72,6 +72,12 @@ export default function App() {
         setSearchListings(listingData.listings);
       })
       .catch(() => {
+        if (!import.meta.env.DEV) {
+          setSearchUsers([]);
+          setSearchListings([]);
+          return;
+        }
+
         setSearchUsers(getCommunityMockUsers());
         setSearchListings(getMockListings().map(item => ({
           id: item.id,

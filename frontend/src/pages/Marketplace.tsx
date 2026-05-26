@@ -33,8 +33,9 @@ export default function Marketplace() {
   const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null);
 
   useEffect(() => {
-    const visibleMockListings = getMockListings()
-      .filter(item => !mockUserId || item.sellerId !== mockUserId);
+    const visibleMockListings = import.meta.env.DEV
+      ? getMockListings().filter(item => !mockUserId || item.sellerId !== mockUserId)
+      : [];
 
     const mockListings = visibleMockListings.map(item => {
       const seller = findMockUserById(item.sellerId);
@@ -77,7 +78,7 @@ export default function Marketplace() {
         }
       })
       .catch(() => {
-        if (mockListings.length > 0) {
+        if (import.meta.env.DEV && mockListings.length > 0) {
           setListings(mockListings);
           setMessage(mockUserId ? "Mostrando publicaciones locales de otras usuarias." : "Mostrando publicaciones guardadas localmente.");
           return;

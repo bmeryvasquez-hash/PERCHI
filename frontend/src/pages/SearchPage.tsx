@@ -49,6 +49,13 @@ export default function SearchPage() {
         setListings(listingData.listings);
       })
       .catch(() => {
+        if (!import.meta.env.DEV) {
+          setUsers([]);
+          setListings([]);
+          setMessage("No se pudo conectar con la API para buscar.");
+          return;
+        }
+
         const mockUsers = getCommunityMockUsers();
         const mockListings = getMockListings().map(item => {
           const seller = findMockUserById(item.sellerId);

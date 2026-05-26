@@ -114,8 +114,14 @@ export default function Community() {
     api<{ users: CommunityUser[] }>("/auth/users")
       .then(data => setApiUsers(data.users))
       .catch(() => {
-        setApiUsers(null);
-        setMessage("Mostrando comunidad local mientras la API no esta disponible.");
+        if (import.meta.env.DEV) {
+          setApiUsers(null);
+          setMessage("Mostrando comunidad local mientras la API no esta disponible.");
+          return;
+        }
+
+        setApiUsers([]);
+        setMessage("No se pudo conectar con la API para cargar la comunidad.");
       });
   }, []);
 
