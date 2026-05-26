@@ -10,10 +10,12 @@ export default function Login() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    ensureMockData();
-    const seeded = getSeedMockCredentials();
-    setEmail(seeded.email);
-    setPassword(seeded.password);
+    if (import.meta.env.DEV) {
+      ensureMockData();
+      const seeded = getSeedMockCredentials();
+      setEmail(seeded.email);
+      setPassword(seeded.password);
+    }
   }, []);
 
   async function onSubmit(event: FormEvent) {
@@ -29,6 +31,11 @@ export default function Login() {
       navigate("/marketplace");
       return;
     } catch {
+      if (!import.meta.env.DEV) {
+        setError("No se pudo iniciar sesion. Revisa tu correo y contrasena.");
+        return;
+      }
+
       const user = verifyMockCredentials(email, password);
       if (user) {
         loginAsMockUser(user.id);
@@ -37,15 +44,13 @@ export default function Login() {
       }
     }
 
-    setError("No se pudo iniciar sesion. En modo local usa el correo y clave precargados.");
+    setError("No se pudo iniciar sesion. Revisa tu correo y contrasena.");
   }
 
   return (
     <main className="auth-page">
       <form className="auth-card" onSubmit={onSubmit}>
         <h1>Entrar a Perchi</h1>
-        <p className="muted">Modo local listo: puedes entrar con la cuenta precargada o navegar con sesion demo.</p>
-        <p className="muted">Tambien puedes usar `3arbie.urm@gmail.com` con clave `1234`.</p>
         {error && <p className="error">{error}</p>}
         <label>Correo<input value={email} onChange={e => setEmail(e.target.value)} type="email" required /></label>
         <label>Contrasena<input value={password} onChange={e => setPassword(e.target.value)} type="password" required /></label>
