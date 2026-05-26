@@ -2,28 +2,43 @@ import { Link } from "react-router-dom";
 import { BadgeCheck, CreditCard, HeartHandshake, Sparkles } from "lucide-react";
 import { useAuthState } from "../hooks/useAuthState";
 
-export default function Home() {
+function HeroSection() {
   const { isLoggedIn } = useAuthState();
 
   return (
-    <main>
-      <section className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">Comunidad circular de moda</p>
-          <h1>Tu closet merece una <span>segunda historia</span></h1>
-          <p>Perchi es una comunidad de mujeres que compran, venden e inspiran. Sube tus prendas, crea tu closet y conecta con compradoras reales.</p>
-          <div className="hero-actions">
-            <Link className="primary-button" to="/sell">Vender mi closet</Link>
-            <Link className="secondary-button" to="/marketplace">Explorar productos</Link>
-            {isLoggedIn ? <Link className="secondary-button" to="/profile">Ir a mi perfil</Link> : null}
+    <section className="hero">
+      <div className="hero-copy">
+        <p className="eyebrow">Comunidad circular de moda</p>
+        <h1>Tu closet merece una <span>segunda historia</span></h1>
+        <p>Perchi es una comunidad de mujeres que compran, venden e inspiran. Sube tus prendas, crea tu closet y conecta con compradoras reales.</p>
+        <div className="hero-actions">
+          <Link className="primary-button" to="/sell">Vender mi closet</Link>
+          <Link className="secondary-button" to="/marketplace">Explorar productos</Link>
+          {isLoggedIn ? <Link className="secondary-button" to="/profile">Ir a mi perfil</Link> : null}
+        </div>
+      </div>
+
+      <div className="hero-visual" aria-label="Closet circular Perchi">
+        <div className="hero-image-frame">
+          <img src="/inicio.png" alt="Closet circular femenino con prendas, accesorios y comunidad" />
+          <div className="hero-price-tag hero-price-tag-a">
+            <span>Top corset rosa</span>
+            <strong>$15.000</strong>
+          </div>
+          <div className="hero-price-tag hero-price-tag-b">
+            <span>Vestido floral</span>
+            <strong>$28.000</strong>
           </div>
         </div>
-        <div className="hero-card">
-          <div className="floating-card card-a">Top corset rosa<br /><strong>$15.000</strong></div>
-          <div className="floating-card card-b">Vestido floral<br /><strong>$28.000</strong></div>
-          <div className="circle-photo">P</div>
-        </div>
-      </section>
+      </div>
+    </section>
+  );
+}
+
+export default function Home() {
+  return (
+    <main>
+      <HeroSection />
 
       <section id="comunidad" className="value-section">
         <h2>{"M\u00e1s que moda, comunidad y prop\u00f3sito"}</h2>

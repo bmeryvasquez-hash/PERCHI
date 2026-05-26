@@ -93,13 +93,13 @@ export default function App() {
     const allSuggestions: SearchSuggestion[] = [
       ...searchUsers.map(user => ({
         label: user.name,
-        meta: [user.commune, user.city, "perfil"].filter(Boolean).join(" · "),
+        meta: [user.commune, user.city, "perfil"].filter(Boolean).join(" - "),
         path: `/users/${user.id}`
       })),
       ...searchListings.flatMap(listing => [
         {
           label: listing.title,
-          meta: [listing.brand, formatType(listing.category), formatStyle(listing.style ?? "CASUAL"), listing.seller.name].filter(Boolean).join(" · "),
+          meta: [listing.brand, formatType(listing.category), formatStyle(listing.style ?? "CASUAL"), listing.seller.name].filter(Boolean).join(" - "),
           path: `/search?q=${encodeURIComponent(listing.title)}`
         },
         {
@@ -164,9 +164,9 @@ export default function App() {
       <header className="topbar">
         <Link to="/" className="brand brand-logo" aria-label="Perchi"><img src="/logo_perchi.png" alt="Perchi" /></Link>
         <nav>
-          <Link to="/marketplace">Explorar productos</Link>
+          <Link to="/marketplace">Comprar</Link>
           <Link to="/community">Comunidad</Link>
-          <Link to="/sell">Vender mi closet</Link>
+          <Link to="/sell">Vender</Link>
         </nav>
         <div className="top-actions">
           <div className="search-wrap">
@@ -194,12 +194,14 @@ export default function App() {
           </div>
           <Link className="icon-link" to="/likes" aria-label="Mis me gusta"><Heart size={20} /></Link>
           {isLoggedIn ? (
-            <>
+            <div className="session-actions">
               <Link className="profile-pill" to="/profile"><UserRound size={18} /> Mi perfil</Link>
               <button className="link-button" onClick={logout}>Salir</button>
-            </>
+            </div>
           ) : (
-            <Link to="/login"><UserRound size={20} /></Link>
+            <div className="session-actions">
+              <Link className="icon-link" to="/login" aria-label="Iniciar sesion"><UserRound size={20} /></Link>
+            </div>
           )}
         </div>
       </header>

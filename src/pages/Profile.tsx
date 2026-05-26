@@ -1,11 +1,12 @@
 import { Heart } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, getMockSessionUserId, getToken, isDemoSession, isMockSession } from "../api/client";
+import { api, getMockSessionUserId, getToken, isDemoSession, isMockSession, uploadImageDataUrl } from "../api/client";
 import ImageLightbox from "../components/ImageLightbox";
 import { findMockUserById, getMockLikedListingIds, getMockListingsByUser, toggleMockLike, updateMockListing, updateMockUser } from "../api/mock";
 import { deliveryModes, formatDeliveryMode } from "../lib/deliveryModes";
 import { cityOptions, getCommuneOptionsForCity } from "../lib/chileLocations";
+import { readImageFileAsDataUrl } from "../lib/images";
 import { clothingConditions, clothingStyles, clothingTypes, formatStyle, formatType } from "../lib/listingOptions";
 import { demoListings, type Listing } from "./Marketplace";
 
@@ -37,15 +38,6 @@ type ListingForm = {
 const demoProfiles: Record<string, ProfileUser> = {
   "demo-self": { id: "demo-self", name: "Tu closet demo", city: "Santiago", commune: "Santiago", bio: "Perfil demo para recorrer la interfaz de Perchi.", status: "ACTIVE", deliveryMode: "PRESENCIAL_ENVIO", _count: { listings: 0 } }
 };
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
-    reader.readAsDataURL(file);
-  });
-}
 
 function listingToForm(listing: Listing): ListingForm {
   return {
@@ -134,7 +126,9 @@ export default function Profile() {
         return;
       }
 
-      const mockUserId = isOwnProfile ? (isMockSession() ? getMockSessionUserId() : null) : userId;
+      const mockUserId = isMockSession()
+        ? (isOwnProfile ? getMockSessionUserId() : userId)
+        : null;
 
       if (mockUserId) {
         const mockUser = mockUserId ? findMockUserById(mockUserId) : null;
@@ -228,8 +222,46 @@ export default function Profile() {
     if (!file) return;
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      setForm(current => ({ ...current, avatarUrl: dataUrl }));
+      const dataUrl = await readImageFileAsDataUrl(file, 900, 0.84);
+
+      if (isDemoSession() || isMockSession()) {
+        setForm(current => ({ ...current, avatarUrl: dataUrl }));
+        return;
+      }
+
+      setMessage("Subiendo foto de perfil...");
+      const imageUrl = await uploadImageDataUrl(dataUrl);
+      const nextForm = { ...form, avatarUrl: imageUrl };
+      setForm(nextForm);
+
+      const data = await api<{ user: ProfileUser; message: string }>("/auth/me", {
+        method: "PATCH",
+        body: JSON.stringify(nextForm)
+      });
+
+      setUser({ ...data.user, commune: data.user.commune ?? nextForm.commune, deliveryMode: data.user.deliveryMode ?? nextForm.deliveryMode });
+      setMessage("Foto de perfil actualizada.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo cargar la imagen");
+    }
+  }
+
+  async function onListingImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const dataUrl = await readImageFileAsDataUrl(file);
+
+      if (isMockSession()) {
+        setListingForm(current => current ? { ...current, imageUrl: dataUrl } : current);
+        return;
+      }
+
+      setMessage("Subiendo imagen...");
+      const imageUrl = await uploadImageDataUrl(dataUrl);
+      setListingForm(current => current ? { ...current, imageUrl } : current);
+      setMessage("Imagen lista. Guarda la publicacion para aplicar el cambio.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar la imagen");
     }
@@ -415,9 +447,12 @@ export default function Profile() {
                   <h1>{user.name}</h1>
                 </div>
                 {isOwnProfile ? (
-                  <button className="secondary-button" type="button" onClick={() => setIsEditing(current => !current)}>
-                    {isEditing ? "Cerrar edicion" : "Editar perfil"}
-                  </button>
+                  <div className="profile-actions">
+                    <Link className="primary-button" to="/sell">Publicar prenda</Link>
+                    <button className="secondary-button" type="button" onClick={() => setIsEditing(current => !current)}>
+                      {isEditing ? "Cerrar edicion" : "Editar perfil"}
+                    </button>
+                  </div>
                 ) : null}
               </div>
 
@@ -441,7 +476,6 @@ export default function Profile() {
               <label>Modalidad de entrega<select value={form.deliveryMode} onChange={e => setForm(current => ({ ...current, deliveryMode: e.target.value }))}>{deliveryModes.map(mode => <option key={mode.value} value={mode.value}>{mode.label}</option>)}</select></label>
               <label>Descripcion<textarea value={form.bio} onChange={e => setForm(current => ({ ...current, bio: e.target.value }))} maxLength={240} /></label>
               <label>Subir foto de perfil<input type="file" accept="image/*" onChange={onAvatarChange} /></label>
-              <label>o URL de avatar<input value={form.avatarUrl} onChange={e => setForm(current => ({ ...current, avatarUrl: e.target.value }))} placeholder="https://..." /></label>
               {form.avatarUrl ? <img className="profile-avatar-preview" src={form.avatarUrl} alt="Vista previa del avatar" /> : null}
               <button className="primary-button" type="button" onClick={saveProfile}>Guardar perfil</button>
             </section>
@@ -453,7 +487,12 @@ export default function Profile() {
               <h2>Publicaciones</h2>
             </div>
 
-            {listings.length === 0 ? <p className="muted">Todavia no hay prendas publicadas en este perfil.</p> : null}
+            {listings.length === 0 ? (
+              <div className="empty-profile-posts">
+                <p className="muted">Todavia no hay prendas publicadas en este perfil.</p>
+                {isOwnProfile ? <Link className="primary-button" to="/sell">Publicar primera prenda</Link> : null}
+              </div>
+            ) : null}
 
             <div className="profile-grid">
               {listings.map(item => {
@@ -484,7 +523,8 @@ export default function Profile() {
                         <label>Estado<select value={listingForm.condition} onChange={e => setListingForm(current => current ? { ...current, condition: e.target.value } : current)}>{clothingConditions.map(condition => <option key={condition.value} value={condition.value}>{condition.label}</option>)}</select></label>
                         <label>Descripcion<textarea value={listingForm.description} onChange={e => setListingForm(current => current ? { ...current, description: e.target.value } : current)} /></label>
                         <label>Precio CLP<input value={listingForm.priceClp} onChange={e => setListingForm(current => current ? { ...current, priceClp: e.target.value } : current)} type="number" min="1" required /></label>
-                        <label>URL de imagen<input value={listingForm.imageUrl} onChange={e => setListingForm(current => current ? { ...current, imageUrl: e.target.value } : current)} placeholder="https://..." /></label>
+                        <label>Tomar foto de la prenda<input type="file" accept="image/*" capture="environment" onChange={onListingImageChange} /></label>
+                        <label>Subir imagen desde galeria<input type="file" accept="image/*" onChange={onListingImageChange} /></label>
                         <div className="listing-edit-actions">
                           <button className="primary-button" type="submit">Guardar</button>
                           <button className="secondary-button" type="button" onClick={cancelEditingListing}>Cancelar</button>
