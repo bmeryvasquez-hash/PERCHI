@@ -13,12 +13,13 @@ const app = express();
 const port = Number(process.env.PORT ?? 4000);
 const configuredOrigins = (process.env.FRONTEND_URL ?? "")
   .split(",")
-  .map(origin => origin.trim())
+  .map(origin => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
 function isAllowedOrigin(origin: string) {
   try {
     const url = new URL(origin);
+    const normalizedOrigin = origin.replace(/\/$/, "");
     const isDevPort = url.port === "5173" || url.port === "5174";
     const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
     const isPrivateLan =
@@ -26,7 +27,7 @@ function isAllowedOrigin(origin: string) {
       url.hostname.startsWith("10.") ||
       /^172\.(1[6-9]|2\d|3[0-1])\./.test(url.hostname);
 
-    return configuredOrigins.includes(origin) || (isDevPort && (isLocalhost || isPrivateLan));
+    return configuredOrigins.includes(normalizedOrigin) || (isDevPort && (isLocalhost || isPrivateLan));
   } catch {
     return false;
   }
