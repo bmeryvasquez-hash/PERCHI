@@ -2,6 +2,9 @@
     "name":  "perchi-starter",
     "version":  "0.1.0",
     "private":  true,
+    "engines": {
+                    "node": "22.x"
+                },
     "scripts":  {
                     "db:up":  "docker compose --env-file ../.env up -d postgres",
                     "db:down":  "docker compose --env-file ../.env down",
